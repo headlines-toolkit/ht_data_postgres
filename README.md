@@ -17,7 +17,9 @@ Add the `ht_data_postgres` package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  ht_data_postgres: ^0.1.0 # Use the latest version
+  ht_data_postgres:
+    git:
+      url: https://github.com/headlines-toolkit/ht-data-postgres.git
 ```
 
 ## Features
