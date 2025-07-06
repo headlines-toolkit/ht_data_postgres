@@ -19,8 +19,8 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     required this.fromJson,
     required this.toJson,
     required Logger log,
-  })  : _queryBuilder = _QueryBuilder(tableName: tableName),
-        _log = log;
+  }) : _queryBuilder = _QueryBuilder(tableName: tableName),
+       _log = log;
 
   final Logger _log;
 
@@ -102,7 +102,11 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
       }
       _log.finer('Successfully deleted item with id "$id" from "$tableName".');
     } on Object catch (e, st) {
-      _log.severe('Failed to delete item with id "$id" from "$tableName".', e, st);
+      _log.severe(
+        'Failed to delete item with id "$id" from "$tableName".',
+        e,
+        st,
+      );
       throw _handlePgException(e);
     }
   }
@@ -137,7 +141,11 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
       _log.finer('Successfully read item with id "$id" from "$tableName".');
       return SuccessApiResponse(data: readItem);
     } on Object catch (e, st) {
-      _log.severe('Failed to read item with id "$id" from "$tableName".', e, st);
+      _log.severe(
+        'Failed to read item with id "$id" from "$tableName".',
+        e,
+        st,
+      );
       throw _handlePgException(e);
     }
   }
@@ -262,7 +270,11 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
       _log.finer('Successfully updated item with id "$id" in "$tableName".');
       return SuccessApiResponse(data: updatedItem);
     } on Object catch (e, st) {
-      _log.severe('Failed to update item with id "$id" in "$tableName".', e, st);
+      _log.severe(
+        'Failed to update item with id "$id" in "$tableName".',
+        e,
+        st,
+      );
       throw _handlePgException(e);
     }
   }

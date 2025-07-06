@@ -299,8 +299,7 @@ void main() {
         ).called(1);
       });
 
-      test('should throw NotFoundException if item to update is not found',
-          () {
+      test('should throw NotFoundException if item to update is not found', () {
         final mockResult = MockResult();
         when(() => mockResult.isEmpty).thenReturn(true);
         when(
@@ -372,29 +371,34 @@ void main() {
           () => mockConnection.execute(
             any(
               that: isA<Sql>().having(
-                  (s) => (s as dynamic).sql, 'sql', contains('user_id = @userId')),
+                (s) => (s as dynamic).sql,
+                'sql',
+                contains('user_id = @userId'),
+              ),
             ),
             parameters: {'id': '1', 'userId': 'user-123'},
           ),
         ).called(1);
       });
 
-      test('should throw NotFoundException when item to delete is not found',
-          () {
-        final mockResult = MockResult();
-        when(() => mockResult.affectedRows).thenReturn(0);
-        when(
-          () => mockConnection.execute(
-            any(),
-            parameters: any(named: 'parameters'),
-          ),
-        ).thenAnswer((_) async => mockResult);
+      test(
+        'should throw NotFoundException when item to delete is not found',
+        () {
+          final mockResult = MockResult();
+          when(() => mockResult.affectedRows).thenReturn(0);
+          when(
+            () => mockConnection.execute(
+              any(),
+              parameters: any(named: 'parameters'),
+            ),
+          ).thenAnswer((_) async => mockResult);
 
-        expect(
-          () => sut.delete(id: '1'),
-          throwsA(isA<NotFoundException>()),
-        );
-      });
+          expect(
+            () => sut.delete(id: '1'),
+            throwsA(isA<NotFoundException>()),
+          );
+        },
+      );
     });
 
     group('readAll', () {
@@ -414,8 +418,9 @@ void main() {
         await sut.readAll();
 
         verify(
-          () =>
-              mockLogger.fine(contains('Querying "test_models" with query: {}')),
+          () => mockLogger.fine(
+            contains('Querying "test_models" with query: {}'),
+          ),
         ).called(1);
       });
     });
@@ -454,42 +459,43 @@ void main() {
       });
 
       test(
-          'should build correct query for `_contains` operator and sorting',
-          () async {
-        final mockResult = Result(
-          rows: [],
-          affectedRows: 0,
-          schema: ResultSchema([]),
-        );
-        when(
-          () => mockConnection.execute(
-            any(),
-            parameters: any(named: 'parameters'),
-          ),
-        ).thenAnswer((_) async => mockResult);
+        'should build correct query for `_contains` operator and sorting',
+        () async {
+          final mockResult = Result(
+            rows: [],
+            affectedRows: 0,
+            schema: ResultSchema([]),
+          );
+          when(
+            () => mockConnection.execute(
+              any(),
+              parameters: any(named: 'parameters'),
+            ),
+          ).thenAnswer((_) async => mockResult);
 
-        await sut.readAllByQuery(
-          {'name_contains': 'Test'},
-          sortBy: 'name',
-          sortOrder: SortOrder.desc,
-        );
+          await sut.readAllByQuery(
+            {'name_contains': 'Test'},
+            sortBy: 'name',
+            sortOrder: SortOrder.desc,
+          );
 
-        final captured = verify(
-          () => mockConnection.execute(
-            captureAny(),
-            parameters: captureAny(named: 'parameters'),
-          ),
-        ).captured;
+          final captured = verify(
+            () => mockConnection.execute(
+              captureAny(),
+              parameters: captureAny(named: 'parameters'),
+            ),
+          ).captured;
 
-        final sql = captured[0] as Sql;
-        final params = captured[1] as Map<String, dynamic>;
+          final sql = captured[0] as Sql;
+          final params = captured[1] as Map<String, dynamic>;
 
-        expect(
-          (sql as dynamic).sql,
-          'SELECT * FROM test_models WHERE name ILIKE @p0 ORDER BY name DESC;',
-        );
-        expect(params, {'p0': '%Test%'});
-      });
+          expect(
+            (sql as dynamic).sql,
+            'SELECT * FROM test_models WHERE name ILIKE @p0 ORDER BY name DESC;',
+          );
+          expect(params, {'p0': '%Test%'});
+        },
+      );
 
       test('should build correct query for exact match operator', () async {
         final mockResult = Result(
@@ -524,31 +530,32 @@ void main() {
       });
 
       test(
-          'should return paginated response with hasMore true when limit is exceeded',
-          () async {
-        final mockResultRow = MockResultRow();
-        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
+        'should return paginated response with hasMore true when limit is exceeded',
+        () async {
+          final mockResultRow = MockResultRow();
+          when(mockResultRow.toColumnMap).thenReturn(testModelJson);
 
-        // Create a real Result object containing mock rows
-        final mockResult = Result(
-          rows: List.generate(6, (_) => mockResultRow), // Return 6 rows
-          affectedRows: 6,
-          schema: ResultSchema([]),
-        );
+          // Create a real Result object containing mock rows
+          final mockResult = Result(
+            rows: List.generate(6, (_) => mockResultRow), // Return 6 rows
+            affectedRows: 6,
+            schema: ResultSchema([]),
+          );
 
-        when(
-          () => mockConnection.execute(
-            any(),
-            parameters: any(named: 'parameters'),
-          ),
-        ).thenAnswer((_) async => mockResult);
+          when(
+            () => mockConnection.execute(
+              any(),
+              parameters: any(named: 'parameters'),
+            ),
+          ).thenAnswer((_) async => mockResult);
 
-        final result = await sut.readAllByQuery({}, limit: 5);
+          final result = await sut.readAllByQuery({}, limit: 5);
 
-        expect(result.data.items.length, 5);
-        expect(result.data.hasMore, isTrue);
-        expect(result.data.cursor, '1');
-      });
+          expect(result.data.items.length, 5);
+          expect(result.data.hasMore, isTrue);
+          expect(result.data.cursor, '1');
+        },
+      );
 
       test('should throw InvalidInputException for invalid column name', () {
         expect(
@@ -591,12 +598,28 @@ void main() {
       });
 
       test(
-          'should throw OperationFailedException on unknown ServerException code',
-          () {
-        final exception = FakeServerException(
-          message: 'some other server error',
-          code: 'XXXXX',
-        );
+        'should throw OperationFailedException on unknown ServerException code',
+        () {
+          final exception = FakeServerException(
+            message: 'some other server error',
+            code: 'XXXXX',
+          );
+          when(
+            () => mockConnection.execute(
+              any(),
+              parameters: any(named: 'parameters'),
+            ),
+          ).thenThrow(exception);
+
+          expect(
+            () => sut.readAllByQuery({}),
+            throwsA(isA<OperationFailedException>()),
+          );
+        },
+      );
+
+      test('should rethrow generic Exception for unknown errors', () {
+        final exception = Exception('a completely unknown error');
         when(
           () => mockConnection.execute(
             any(),
@@ -606,17 +629,14 @@ void main() {
 
         expect(
           () => sut.readAllByQuery({}),
-          throwsA(isA<OperationFailedException>()),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'toString',
+              contains('An unknown error occurred'),
+            ),
+          ),
         );
-      });
-
-      test('should rethrow generic Exception for unknown errors', () {
-        final exception = Exception('a completely unknown error');
-        when(() => mockConnection.execute(any(), parameters: any(named: 'parameters')))
-            .thenThrow(exception);
-
-        expect(() => sut.readAllByQuery({}),
-            throwsA(isA<Exception>().having((e) => e.toString(), 'toString', contains('An unknown error occurred'))));
       });
     });
   });
