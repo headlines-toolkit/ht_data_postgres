@@ -356,6 +356,29 @@ void main() {
       });
     });
 
+    group('readAll', () {
+      test('should call readAllByQuery with empty query map', () async {
+        final mockResult = Result(
+          rows: [],
+          affectedRows: 0,
+          schema: ResultSchema([]),
+        );
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.readAll();
+
+        verify(
+          () =>
+              mockLogger.fine(contains('Querying "test_models" with query: {}')),
+        ).called(1);
+      });
+    });
+
     group('readAllByQuery', () {
       test('should build correct query for `_in` operator', () async {
         final mockResult = Result(
