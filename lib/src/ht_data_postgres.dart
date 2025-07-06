@@ -1,5 +1,6 @@
 import 'package:ht_data_client/ht_data_client.dart';
 import 'package:ht_shared/ht_shared.dart' hide ServerException;
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
 /// {@template ht_data_postgres}
@@ -18,6 +19,8 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     required this.fromJson,
     required this.toJson,
   }) : _queryBuilder = _QueryBuilder(tableName: tableName);
+
+  final _log = Logger('HtDataPostgresClient<$T>');
 
   /// The active PostgreSQL database connection.
   final Connection connection;
@@ -40,6 +43,7 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     required T item,
     String? userId,
   }) async {
+    _log.fine('Creating item in "$tableName"...');
     try {
       final data = toJson(item);
       if (userId != null) {
@@ -62,8 +66,12 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
       final createdItem = fromJson(
         result.first.toColumnMap(),
       );
+      _log.finer(
+        'Successfully created item with id "${(createdItem as dynamic).id}" in "$tableName".',
+      );
       return SuccessApiResponse(data: createdItem);
-    } on Object catch (e) {
+    } on Object catch (e, st) {
+      _log.severe('Failed to create item in "$tableName".', e, st);
       throw _handlePgException(e);
     }
   }
@@ -71,6 +79,7 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
   @override
   Future<void> delete({required String id, String? userId}) async {
     try {
+      _log.fine('Deleting item with id "$id" from "$tableName"...');
       var sql = 'DELETE FROM $tableName WHERE id = @id';
       final parameters = <String, dynamic>{'id': id};
 
@@ -89,7 +98,9 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
           'Item with ID "$id" not found${userId != null ? ' for this user' : ''}.',
         );
       }
-    } on Object catch (e) {
+      _log.finer('Successfully deleted item with id "$id" from "$tableName".');
+    } on Object catch (e, st) {
+      _log.severe('Failed to delete item with id "$id" from "$tableName".', e, st);
       throw _handlePgException(e);
     }
   }
@@ -99,6 +110,7 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     required String id,
     String? userId,
   }) async {
+    _log.fine('Reading item with id "$id" from "$tableName"...');
     try {
       var sql = 'SELECT * FROM $tableName WHERE id = @id';
       final parameters = <String, dynamic>{'id': id};
@@ -120,8 +132,10 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
         );
       }
       final readItem = fromJson(result.first.toColumnMap());
+      _log.finer('Successfully read item with id "$id" from "$tableName".');
       return SuccessApiResponse(data: readItem);
-    } on Object catch (e) {
+    } on Object catch (e, st) {
+      _log.severe('Failed to read item with id "$id" from "$tableName".', e, st);
       throw _handlePgException(e);
     }
   }
@@ -154,6 +168,9 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     String? sortBy,
     SortOrder? sortOrder,
   }) async {
+    _log.fine(
+      'Querying "$tableName" with query: $query, limit: $limit, sortBy: $sortBy',
+    );
     try {
       // Note: startAfterId is not yet implemented for PostgreSQL client.
       // Keyset pagination would be required for a robust implementation.
@@ -183,6 +200,9 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
           ? (items.last as dynamic).id as String?
           : null;
 
+      _log.finer(
+        'Successfully queried "$tableName". Found ${items.length} items.',
+      );
       return SuccessApiResponse(
         data: PaginatedResponse(
           items: items,
@@ -190,7 +210,8 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
           cursor: cursor,
         ),
       );
-    } on Object catch (e) {
+    } on Object catch (e, st) {
+      _log.severe('Failed to query "$tableName".', e, st);
       throw _handlePgException(e);
     }
   }
@@ -201,6 +222,7 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     required T item,
     String? userId,
   }) async {
+    _log.fine('Updating item with id "$id" in "$tableName"...');
     try {
       final data = toJson(item)
         // Remove 'id' from the data to be updated in SET clause, as it's used
@@ -235,8 +257,10 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
         );
       }
       final updatedItem = fromJson(result.first.toColumnMap());
+      _log.finer('Successfully updated item with id "$id" in "$tableName".');
       return SuccessApiResponse(data: updatedItem);
-    } on Object catch (e) {
+    } on Object catch (e, st) {
+      _log.severe('Failed to update item with id "$id" in "$tableName".', e, st);
       throw _handlePgException(e);
     }
   }
@@ -244,6 +268,10 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
   /// Maps a [PgException] to a corresponding [HtHttpException].
   Exception _handlePgException(Object e) {
     if (e is ServerException) {
+      _log.warning(
+        'Mapping ServerException with code: ${e.code} to HtHttpException.',
+        e,
+      );
       // See PostgreSQL error codes: https://www.postgresql.org/docs/current/errcodes-appendix.html
       final code = e.code;
       if (code != null) {
@@ -262,10 +290,12 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
         'A database error occurred: ${e.message}',
       );
     } else if (e is PgException) {
+      _log.warning('Mapping generic PgException to HtHttpException.', e);
       return OperationFailedException(
         'A database connection error occurred: ${e.message}',
       );
     }
+    _log.severe('Encountered an unknown exception type.', e);
     return Exception('An unknown error occurred: $e');
   }
 }
