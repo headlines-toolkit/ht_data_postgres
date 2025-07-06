@@ -1,10 +1,19 @@
 name: ht_data_postgres
 description: A Very Good Project created by Very Good CLI.
-version: 0.1.0+1
+repository: https://github.com/headlines-toolkit/ht-data-postgres
 publish_to: none
 
 environment:
   sdk: ^3.8.0
+
+dependencies: 
+  ht_data_client:
+    git:
+      url: https://github.com/headlines-toolkit/ht-data-client.git
+  ht_shared:
+    git:
+      url: https://github.com/headlines-toolkit/ht-shared.git
+  postgres: ^3.5.6
 
 dev_dependencies:
   mocktail: ^1.0.4
