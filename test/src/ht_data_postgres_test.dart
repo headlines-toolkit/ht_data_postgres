@@ -453,6 +453,71 @@ void main() {
         expect(params, {'p0': '1', 'p1': '2', 'p2': '3'});
       });
 
+      test(
+          'should build correct query for `_contains` operator and sorting',
+          () async {
+        final mockResult = Result(
+          rows: [],
+          affectedRows: 0,
+          schema: ResultSchema([]),
+        );
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.readAllByQuery(
+          {'name_contains': 'Test'},
+          sortBy: 'name',
+          sortOrder: SortOrder.desc,
+        );
+
+        final captured = verify(
+          () => mockConnection.execute(
+            captureAny(),
+            parameters: captureAny(named: 'parameters'),
+          ),
+        ).captured;
+
+        final sql = captured[0] as Sql;
+        final params = captured[1] as Map<String, dynamic>;
+
+        expect(
+          (sql as dynamic).sql,
+          'SELECT * FROM test_models WHERE name ILIKE @p0 ORDER BY name DESC;',
+        );
+        expect(params, {'p0': '%Test%'});
+      });
+
+      test(
+          'should return paginated response with hasMore true when limit is exceeded',
+          () async {
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+
+        // Create a real Result object containing mock rows
+        final mockResult = Result(
+          rows: List.generate(6, (_) => mockResultRow), // Return 6 rows
+          affectedRows: 6,
+          schema: ResultSchema([]),
+        );
+
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        final result = await sut.readAllByQuery({}, limit: 5);
+
+        expect(result.data.items.length, 5);
+        expect(result.data.hasMore, isTrue);
+        expect(result.data.cursor, '1');
+      });
+
       test('should throw InvalidInputException for invalid column name', () {
         expect(
           () => sut.readAllByQuery({'id; DROP TABLE test_models;': '1'}),
