@@ -298,6 +298,47 @@ void main() {
           ),
         ).called(1);
       });
+
+      test('should throw NotFoundException if item to update is not found',
+          () {
+        final mockResult = MockResult();
+        when(() => mockResult.isEmpty).thenReturn(true);
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        expect(
+          () => sut.update(id: '1', item: testModel),
+          throwsA(isA<NotFoundException>()),
+        );
+      });
+
+      test('should call read when update data is empty', () async {
+        final mockResult = MockResult();
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(() => mockResult.isEmpty).thenReturn(false);
+        when(() => mockResult.first).thenReturn(mockResultRow);
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        final mockEmptyModel = MockTestModel();
+        when(() => mockEmptyModel.toJson()).thenReturn({'id': '1'});
+
+        await sut.update(id: '1', item: mockEmptyModel);
+
+        // Verify that read was called by checking for the SELECT statement
+        verify(
+          () => mockLogger.fine(contains('Reading item with id "1"')),
+        ).called(1);
+      });
     });
 
     group('delete', () {
