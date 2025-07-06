@@ -491,6 +491,38 @@ void main() {
         expect(params, {'p0': '%Test%'});
       });
 
+      test('should build correct query for exact match operator', () async {
+        final mockResult = Result(
+          rows: [],
+          affectedRows: 0,
+          schema: ResultSchema([]),
+        );
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.readAllByQuery({'name': 'Test'});
+
+        final captured = verify(
+          () => mockConnection.execute(
+            captureAny(),
+            parameters: captureAny(named: 'parameters'),
+          ),
+        ).captured;
+
+        final sql = captured[0] as Sql;
+        final params = captured[1] as Map<String, dynamic>;
+
+        expect(
+          (sql as dynamic).sql,
+          'SELECT * FROM test_models WHERE name = @p0;',
+        );
+        expect(params, {'p0': 'Test'});
+      });
+
       test(
           'should return paginated response with hasMore true when limit is exceeded',
           () async {
@@ -523,6 +555,68 @@ void main() {
           () => sut.readAllByQuery({'id; DROP TABLE test_models;': '1'}),
           throwsA(isA<InvalidInputException>()),
         );
+      });
+
+      test('should throw BadRequestException on foreign key violation', () {
+        final exception = FakeServerException(
+          message: 'foreign key violation',
+          code: '23503',
+        );
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenThrow(exception);
+
+        expect(
+          () => sut.readAllByQuery({}),
+          throwsA(isA<BadRequestException>()),
+        );
+      });
+
+      test('should throw OperationFailedException on generic PgException', () {
+        final exception = PgException('generic connection error');
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenThrow(exception);
+
+        expect(
+          () => sut.readAllByQuery({}),
+          throwsA(isA<OperationFailedException>()),
+        );
+      });
+
+      test(
+          'should throw OperationFailedException on unknown ServerException code',
+          () {
+        final exception = FakeServerException(
+          message: 'some other server error',
+          code: 'XXXXX',
+        );
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenThrow(exception);
+
+        expect(
+          () => sut.readAllByQuery({}),
+          throwsA(isA<OperationFailedException>()),
+        );
+      });
+
+      test('should rethrow generic Exception for unknown errors', () {
+        final exception = Exception('a completely unknown error');
+        when(() => mockConnection.execute(any(), parameters: any(named: 'parameters')))
+            .thenThrow(exception);
+
+        expect(() => sut.readAllByQuery({}),
+            throwsA(isA<Exception>().having((e) => e.toString(), 'toString', contains('An unknown error occurred'))));
       });
     });
   });
