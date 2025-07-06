@@ -274,7 +274,7 @@ void main() {
 
         expect(
           (sql as dynamic).sql,
-          'SELECT * FROM test_models WHERE id IN (@p0, @p1, @p2) LIMIT 11;',
+          'SELECT * FROM test_models WHERE id IN (@p0, @p1, @p2);',
         );
         expect(params, {'p0': '1', 'p1': '2', 'p2': '3'});
       });
