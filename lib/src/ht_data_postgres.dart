@@ -176,19 +176,13 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     try {
       // Note: startAfterId is not yet implemented for PostgreSQL client.
       // Keyset pagination would be required for a robust implementation.
-      final (String, Map<String, dynamic>) queryParts;
-      try {
-        queryParts = _queryBuilder.buildSelect(
-          query: query,
-          userId: userId,
-          limit: limit,
-          sortBy: sortBy,
-          sortOrder: sortOrder,
-        );
-      } on ArgumentError catch (e) {
-        throw InvalidInputException(e.message);
-      }
-      final (sql, params) = queryParts;
+      final (sql, params) = _queryBuilder.buildSelect(
+        query: query,
+        userId: userId,
+        limit: limit,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
 
       final result = await connection.execute(
         Sql.named(sql),
@@ -394,7 +388,7 @@ class _QueryBuilder {
     // This prevents basic injection by only allowing alphanumeric, underscore,
     // and dot characters, then replacing dots.
     if (!RegExp(r'^[a-zA-Z0-9_.]+$').hasMatch(name)) {
-      throw ArgumentError('Invalid column name format: $name');
+      throw InvalidInputException('Invalid column name format: $name');
     }
     return name.replaceAll('.', '_');
   }
