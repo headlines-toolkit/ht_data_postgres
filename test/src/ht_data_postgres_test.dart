@@ -248,8 +248,11 @@ void main() {
 
     group('readAllByQuery', () {
       test('should build correct query for `_in` operator', () async {
-        final mockResult = MockResult();
-        when(() => mockResult.map(any())).thenReturn([]);
+        final mockResult = Result(
+          rows: [],
+          affectedRows: 0,
+          schema: ResultSchema([]),
+        );
         when(
           () => mockConnection.execute(
             any(),
@@ -276,10 +279,10 @@ void main() {
         expect(params, {'p0': '1', 'p1': '2', 'p2': '3'});
       });
 
-      test('should throw ArgumentError for invalid column name', () {
+      test('should throw InvalidInputException for invalid column name', () {
         expect(
           () => sut.readAllByQuery({'id; DROP TABLE test_models;': '1'}),
-          throwsA(isA<ArgumentError>()),
+          throwsA(isA<InvalidInputException>()),
         );
       });
     });
