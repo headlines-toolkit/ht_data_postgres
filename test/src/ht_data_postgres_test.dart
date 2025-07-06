@@ -16,9 +16,26 @@ class MockLogger extends Mock implements Logger {}
 
 class MockResult extends Mock implements Result {}
 
-class MockRow extends Mock implements Row {}
+class MockResultRow extends Mock implements ResultRow {}
 
 class FakeSql extends Fake implements Sql {}
+
+class FakeServerException extends Fake implements ServerException {
+  FakeServerException({
+    required this.message,
+    this.code,
+    this.severity = Severity.error,
+  });
+
+  @override
+  final String? code;
+
+  @override
+  final String message;
+
+  @override
+  final Severity severity;
+}
 
 class TestModel extends Equatable {
   const TestModel({required this.id, required this.name});
@@ -68,9 +85,9 @@ void main() {
     group('create', () {
       test('should return created item on success', () async {
         final mockResult = MockResult();
-        final mockRow = MockRow();
-        when(() => mockRow.toColumnMap()).thenReturn(testModelJson);
-        when(() => mockResult.first).thenReturn(mockRow);
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
             any(),
@@ -85,8 +102,8 @@ void main() {
           () => mockConnection.execute(
             any(
               that: isA<Sql>().having(
-                (s) => s.statement,
-                'statement',
+                (s) => (s as dynamic).sql as String,
+                'sql',
                 'INSERT INTO test_models (id, name) VALUES (@id, @name) RETURNING *;',
               ),
             ),
@@ -98,10 +115,9 @@ void main() {
       });
 
       test('should throw ConflictException on unique violation', () {
-        final exception = ServerException(
-          'unique violation',
+        final exception = FakeServerException(
+          message: 'unique violation',
           code: '23505',
-          severity: Severity.error,
         );
         when(
           () => mockConnection.execute(
@@ -121,10 +137,10 @@ void main() {
     group('read', () {
       test('should return item when found', () async {
         final mockResult = MockResult();
-        final mockRow = MockRow();
-        when(() => mockRow.toColumnMap()).thenReturn(testModelJson);
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
-        when(() => mockResult.first).thenReturn(mockRow);
+        when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
             any(),
@@ -139,8 +155,8 @@ void main() {
           () => mockConnection.execute(
             any(
               that: isA<Sql>().having(
-                (s) => s.statement,
-                'statement',
+                (s) => (s as dynamic).sql as String,
+                'sql',
                 'SELECT * FROM test_models WHERE id = @id;',
               ),
             ),
@@ -169,10 +185,10 @@ void main() {
     group('update', () {
       test('should return updated item on success', () async {
         final mockResult = MockResult();
-        final mockRow = MockRow();
-        when(() => mockRow.toColumnMap()).thenReturn(testModelJson);
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
-        when(() => mockResult.first).thenReturn(mockRow);
+        when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
             any(),
@@ -187,8 +203,8 @@ void main() {
           () => mockConnection.execute(
             any(
               that: isA<Sql>().having(
-                (s) => s.statement,
-                'statement',
+                (s) => (s as dynamic).sql as String,
+                'sql',
                 'UPDATE test_models SET name = @name WHERE id = @id RETURNING *;',
               ),
             ),
@@ -255,7 +271,7 @@ void main() {
         final params = captured[1] as Map<String, dynamic>;
 
         expect(
-          sql.statement,
+          (sql as dynamic).sql,
           'SELECT * FROM test_models WHERE id IN (@p0, @p1, @p2) LIMIT 11;',
         );
         expect(params, {'p0': '1', 'p1': '2', 'p2': '3'});
