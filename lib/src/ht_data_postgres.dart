@@ -176,13 +176,19 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     try {
       // Note: startAfterId is not yet implemented for PostgreSQL client.
       // Keyset pagination would be required for a robust implementation.
-      final (sql, params) = _queryBuilder.buildSelect(
-        query: query,
-        userId: userId,
-        limit: limit,
-        sortBy: sortBy,
-        sortOrder: sortOrder,
-      );
+      final (String, Map<String, dynamic>) queryParts;
+      try {
+        queryParts = _queryBuilder.buildSelect(
+          query: query,
+          userId: userId,
+          limit: limit,
+          sortBy: sortBy,
+          sortOrder: sortOrder,
+        );
+      } on ArgumentError catch (e) {
+        throw InvalidInputException(e.message);
+      }
+      final (sql, params) = queryParts;
 
       final result = await connection.execute(
         Sql.named(sql),
@@ -269,6 +275,9 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
 
   /// Maps a [PgException] to a corresponding [HtHttpException].
   Exception _handlePgException(Object e) {
+    if (e is HtHttpException) {
+      return e;
+    }
     if (e is ServerException) {
       _log.warning(
         'Mapping ServerException with code: ${e.code} to HtHttpException.',
