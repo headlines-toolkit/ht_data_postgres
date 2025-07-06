@@ -2,7 +2,6 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:equatable/equatable.dart';
-import 'package:ht_data_client/ht_data_client.dart';
 import 'package:ht_data_postgres/ht_data_postgres.dart';
 import 'package:ht_shared/ht_shared.dart' hide ServerException;
 import 'package:logging/logging.dart';
@@ -86,7 +85,7 @@ void main() {
       test('should return created item on success', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
@@ -138,7 +137,7 @@ void main() {
       test('should return item when found', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -186,7 +185,7 @@ void main() {
       test('should return updated item on success', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
