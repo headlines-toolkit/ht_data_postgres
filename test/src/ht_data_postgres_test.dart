@@ -19,6 +19,8 @@ class MockResultRow extends Mock implements ResultRow {}
 
 class FakeSql extends Fake implements Sql {}
 
+class MockTestModel extends Mock implements TestModel {}
+
 class FakeServerException extends Fake implements ServerException {
   FakeServerException({
     required this.message,
@@ -67,6 +69,7 @@ void main() {
 
     setUpAll(() {
       registerFallbackValue(FakeSql());
+      registerFallbackValue(TestModel(id: '', name: ''));
     });
 
     setUp(() {
@@ -85,7 +88,7 @@ void main() {
       test('should return created item on success', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
@@ -131,13 +134,39 @@ void main() {
         );
         verify(() => mockLogger.severe(any(), any(), any())).called(1);
       });
+
+      test('should add userId to query when provided', () async {
+        final mockResult = MockResult();
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(() => mockResult.first).thenReturn(mockResultRow);
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.create(item: testModel, userId: 'user-123');
+
+        verify(
+          () => mockConnection.execute(
+            any(),
+            parameters: {
+              'id': '1',
+              'name': 'Test',
+              'user_id': 'user-123',
+            },
+          ),
+        ).called(1);
+      });
     });
 
     group('read', () {
       test('should return item when found', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -164,6 +193,35 @@ void main() {
         ).called(1);
       });
 
+      test('should add userId to query when provided', () async {
+        final mockResult = MockResult();
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(() => mockResult.isEmpty).thenReturn(false);
+        when(() => mockResult.first).thenReturn(mockResultRow);
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.read(id: '1', userId: 'user-123');
+
+        verify(
+          () => mockConnection.execute(
+            any(
+              that: isA<Sql>().having(
+                (s) => (s as dynamic).sql,
+                'sql',
+                contains('user_id = @userId'),
+              ),
+            ),
+            parameters: {'id': '1', 'userId': 'user-123'},
+          ),
+        ).called(1);
+      });
+
       test('should throw NotFoundException when item is not found', () {
         final mockResult = MockResult();
         when(() => mockResult.isEmpty).thenReturn(true);
@@ -185,7 +243,7 @@ void main() {
       test('should return updated item on success', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -211,6 +269,35 @@ void main() {
           ),
         ).called(1);
       });
+
+      test('should add userId to query when provided', () async {
+        final mockResult = MockResult();
+        final mockResultRow = MockResultRow();
+        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(() => mockResult.isEmpty).thenReturn(false);
+        when(() => mockResult.first).thenReturn(mockResultRow);
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.update(id: '1', item: testModel, userId: 'user-123');
+
+        verify(
+          () => mockConnection.execute(
+            any(
+              that: isA<Sql>().having(
+                (s) => (s as dynamic).sql,
+                'sql',
+                contains('user_id = @userId'),
+              ),
+            ),
+            parameters: {'name': 'Test', 'id': '1', 'userId': 'user-123'},
+          ),
+        ).called(1);
+      });
     });
 
     group('delete', () {
@@ -226,6 +313,29 @@ void main() {
 
         await expectLater(sut.delete(id: '1'), completes);
         verify(() => mockLogger.finer(any())).called(1);
+      });
+
+      test('should add userId to query when provided', () async {
+        final mockResult = MockResult();
+        when(() => mockResult.affectedRows).thenReturn(1);
+        when(
+          () => mockConnection.execute(
+            any(),
+            parameters: any(named: 'parameters'),
+          ),
+        ).thenAnswer((_) async => mockResult);
+
+        await sut.delete(id: '1', userId: 'user-123');
+
+        verify(
+          () => mockConnection.execute(
+            any(
+              that: isA<Sql>().having(
+                  (s) => (s as dynamic).sql, 'sql', contains('user_id = @userId')),
+            ),
+            parameters: {'id': '1', 'userId': 'user-123'},
+          ),
+        ).called(1);
       });
 
       test('should throw NotFoundException when item to delete is not found',
