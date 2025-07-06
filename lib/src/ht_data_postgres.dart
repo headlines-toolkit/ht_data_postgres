@@ -18,9 +18,11 @@ class HtDataPostgresClient<T> implements HtDataClient<T> {
     required this.tableName,
     required this.fromJson,
     required this.toJson,
-  }) : _queryBuilder = _QueryBuilder(tableName: tableName);
+    required Logger log,
+  })  : _queryBuilder = _QueryBuilder(tableName: tableName),
+        _log = log;
 
-  final _log = Logger('HtDataPostgresClient<$T>');
+  final Logger _log;
 
   /// The active PostgreSQL database connection.
   final Connection connection;
