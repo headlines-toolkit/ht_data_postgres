@@ -88,7 +88,7 @@ void main() {
       test('should return created item on success', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
@@ -138,7 +138,7 @@ void main() {
       test('should add userId to query when provided', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
           () => mockConnection.execute(
@@ -166,7 +166,7 @@ void main() {
       test('should return item when found', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -196,7 +196,7 @@ void main() {
       test('should add userId to query when provided', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -243,7 +243,7 @@ void main() {
       test('should return updated item on success', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -273,7 +273,7 @@ void main() {
       test('should add userId to query when provided', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -319,7 +319,7 @@ void main() {
       test('should call read when update data is empty', () async {
         final mockResult = MockResult();
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
         when(() => mockResult.isEmpty).thenReturn(false);
         when(() => mockResult.first).thenReturn(mockResultRow);
         when(
@@ -330,7 +330,7 @@ void main() {
         ).thenAnswer((_) async => mockResult);
 
         final mockEmptyModel = MockTestModel();
-        when(() => mockEmptyModel.toJson()).thenReturn({'id': '1'});
+        when(mockEmptyModel.toJson).thenReturn({'id': '1'});
 
         await sut.update(id: '1', item: mockEmptyModel);
 
@@ -527,7 +527,7 @@ void main() {
           'should return paginated response with hasMore true when limit is exceeded',
           () async {
         final mockResultRow = MockResultRow();
-        when(() => mockResultRow.toColumnMap()).thenReturn(testModelJson);
+        when(mockResultRow.toColumnMap).thenReturn(testModelJson);
 
         // Create a real Result object containing mock rows
         final mockResult = Result(
