@@ -4,9 +4,11 @@
 [![style: very good analysis](https://img.shields.io/badge/style-very_good_analysis-B22C89.svg)](https://pub.dev/packages/very_good_analysis)
 [![License: PolyForm Free Trial](https://img.shields.io/badge/License-PolyForm%20Free%20Trial-blue)](https://polyformproject.org/licenses/free-trial/1.0.0)
 
-A generic PostgreSQL implementation of the `HtDataClient` interface.
+> **Note:** This package is being archived. Please use the successor package [`data-mongodb`](https://github.com/flutter-news-app-full-source-code/data-mongodb) instead.
 
-This package provides a concrete implementation of the `HtDataClient`
+A generic PostgreSQL implementation of the `DataClient` interface.
+
+This package provides a concrete implementation of the `DataClient`
 for interacting with PostgreSQL databases. It translates generic CRUD and
 query operations into SQL commands, supporting various data models via
 JSON serialization and deserialization functions.
@@ -19,12 +21,12 @@ Add the `ht_data_postgres` package to your `pubspec.yaml`:
 dependencies:
   ht_data_postgres:
     git:
-      url: https://github.com/headlines-toolkit/ht-data-postgres.git
+      url: https://github.com/flutter-news-app-full-source-code/ht-data-postgres.git
 ```
 
 ## Features
 
-*   **Generic Data Client:** Implements `HtDataClient<T>` for any data model.
+*   **Generic Data Client:** Implements `DataClient<T>` for any data model.
 *   **CRUD Operations:** Supports `create`, `read`, `update`, and `delete`.
 *   **Querying:** `readAll` and `readAllByQuery` with pagination and sorting.
 *   **User Scoping:** Operations can be scoped to a specific user via `userId`.
